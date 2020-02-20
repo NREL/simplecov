@@ -12,6 +12,8 @@ Given /^SimpleCov for (.*) is configured with:$/ do |framework, config_body|
       "test"
     when /Cucumber/i
       "features/support"
+    when /Minitest/i
+      "minitest"
     else
       raise ArgumentError, "Could not identify test framework #{framework}!"
     end
@@ -84,4 +86,16 @@ When "I pry" do
   # rubocop:disable Lint/Debugger
   binding.pry
   # rubocop:enable Lint/Debugger
+end
+
+Given "I'm working on the project {string}" do |project_name|
+  this_dir = File.dirname(__FILE__)
+
+  # Clean up and create blank state for project
+  cd(".") do
+    FileUtils.rm_rf "project"
+    FileUtils.cp_r File.join(this_dir, "../../test_projects/#{project_name}/"), "project"
+  end
+
+  step 'I cd to "project"'
 end

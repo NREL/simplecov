@@ -4,6 +4,9 @@ Feature:
   Defining some groups and filters should give a corresponding
   coverage report that respects those settings after running tests
 
+  Background:
+    Given I'm working on the project "faked_project"
+
   Scenario:
     Given SimpleCov for Test/Unit is configured with:
       """
@@ -23,7 +26,7 @@ Feature:
 
     And I should see the source files:
       | name                                    | coverage |
-      | lib/faked_project.rb                    | 100.0 %  |
-      | lib/faked_project/some_class.rb         |  80.0 %  |
-      | lib/faked_project/framework_specific.rb |  75.0 %  |
-      | lib/faked_project/meta_magic.rb         | 100.0 %  |
+      | lib/faked_project.rb                    | 100.00 %  |
+      | lib/faked_project/some_class.rb         |  80.00 %  |
+      | lib/faked_project/framework_specific.rb |  75.00 %  |
+      | lib/faked_project/meta_magic.rb         | 100.00 %  |

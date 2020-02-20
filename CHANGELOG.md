@@ -1,3 +1,17 @@
+unreleased
+===========
+
+## Bugfixes
+* Use `Minitest.after_run` hook to trigger post-run hooks if `Minitest` is present. See [#756](https://github.com/colszowka/simplecov/pull/756) and [#855](https://github.com/colszowka/simplecov/pull/855) thanks ([@adam12](https://github.com/adam12))
+
+0.18.2 (2020-02-12)
+===================
+
+Small release just to allow you to use the new simplecov-html.
+
+## Enhancements
+* Relax simplecov-html requirement so that you're able to use [0.12.0](https://github.com/colszowka/simplecov-html/blob/master/CHANGELOG.md#0120-2020-02-12)
+
 0.18.1 (2020-01-31)
 ===================
 
@@ -25,6 +39,7 @@ You can run with branch coverage by putting `enable_coverage :branch` into your 
 
 ## Noteworthy
 * `FileList` stopped inheriting from Array, it includes Enumerable so if you didn't use Array specific methods on it in formatters you should be fine
+* We needed to change an internal file format, which we use for merging across processes, to accommodate branch coverage. Sadly CodeClimate chose to use this file to report test coverage. Until a resolution is found the code climate test reporter won't work with SimpleCov for 0.18+, see [this issue on the test reporter](https://github.com/codeclimate/test-reporter/issues/413).
 
 0.18.0.beta3 (2020-01-20)
 ========================

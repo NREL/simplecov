@@ -5,6 +5,7 @@ Feature:
   against the coverage numbers.
 
   Background:
+    Given I'm working on the project "faked_project"
     Given SimpleCov for Test/Unit is configured with:
       """
       require 'simplecov'
@@ -29,11 +30,11 @@ Feature:
 
     Then I should see the source files:
       | name                                    | coverage |
-      | lib/faked_project.rb                    | 100.0 %  |
-      | lib/faked_project/some_class.rb         | 80.0 %   |
-      | lib/faked_project/framework_specific.rb | 75.0 %   |
-      | lib/faked_project/meta_magic.rb         | 100.0 %  |
-      | lib/faked_project/nocov.rb              | 100.0 %  |
+      | lib/faked_project.rb                    | 100.00 %  |
+      | lib/faked_project/some_class.rb         | 80.00 %   |
+      | lib/faked_project/framework_specific.rb | 75.00 %   |
+      | lib/faked_project/meta_magic.rb         | 100.00 %  |
+      | lib/faked_project/nocov.rb              | 100.00 %  |
 
     And there should be 7 skipped lines in the source files
 
@@ -58,11 +59,11 @@ Feature:
 
     Then I should see the source files:
       | name                                    | coverage |
-      | lib/faked_project.rb                    | 100.0 %  |
-      | lib/faked_project/some_class.rb         | 80.0 %   |
-      | lib/faked_project/framework_specific.rb | 75.0 %   |
-      | lib/faked_project/meta_magic.rb         | 100.0 %  |
-      | lib/faked_project/nocov.rb              | 100.0 %  |
+      | lib/faked_project.rb                    | 100.00 %  |
+      | lib/faked_project/some_class.rb         | 80.00 %   |
+      | lib/faked_project/framework_specific.rb | 75.00 %   |
+      | lib/faked_project/meta_magic.rb         | 100.00 %  |
+      | lib/faked_project/nocov.rb              | 100.00 %  |
 
     And there should be 7 skipped lines in the source files
 

@@ -6,6 +6,9 @@ Feature: Grouping on RSpec using a custom filter class
   must implement the matches? method, which is used to determine whether
   or not a file should be added to the group.
 
+  Background:
+    Given I'm working on the project "faked_project"
+
   Scenario:
     Given SimpleCov for RSpec is configured with:
       """
@@ -31,11 +34,10 @@ Feature: Grouping on RSpec using a custom filter class
 
     And I should see the source files:
       | name                                    | coverage |
-      | lib/faked_project/framework_specific.rb | 75.0 %   |
-      | lib/faked_project/some_class.rb         | 80.0 %   |
-      | lib/faked_project.rb                    | 100.0 %  |
-      | lib/faked_project/meta_magic.rb         | 100.0 %  |
-      | spec/forking_spec.rb                    | 100.0 %  |
-      | spec/meta_magic_spec.rb                 | 100.0 %  |
-      | spec/some_class_spec.rb                 | 100.0 %  |
-
+      | lib/faked_project/framework_specific.rb | 75.00 %   |
+      | lib/faked_project/some_class.rb         | 80.00 %   |
+      | lib/faked_project.rb                    | 100.00 %  |
+      | lib/faked_project/meta_magic.rb         | 100.00 %  |
+      | spec/forking_spec.rb                    | 100.00 %  |
+      | spec/meta_magic_spec.rb                 | 100.00 %  |
+      | spec/some_class_spec.rb                 | 100.00 %  |

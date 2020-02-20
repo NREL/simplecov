@@ -6,6 +6,9 @@ Feature: Sophisticated grouping and filtering on RSpec
   and potentially weird conditions to remove files from the report or add them
   to specific groups.
 
+  Background:
+    Given I'm working on the project "faked_project"
+
   Scenario:
     Given SimpleCov for RSpec is configured with:
       """
@@ -34,4 +37,4 @@ Feature: Sophisticated grouping and filtering on RSpec
 
     And I should see the source files:
       | name                            | coverage |
-      | lib/faked_project/meta_magic.rb | 100.0 %  |
+      | lib/faked_project/meta_magic.rb | 100.00 %  |
