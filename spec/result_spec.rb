@@ -2,7 +2,7 @@
 
 require "helper"
 
-describe "result" do
+describe SimpleCov::Result do
   context "with a (mocked) Coverage.result" do
     before do
       @prev_filters = SimpleCov.filters
@@ -21,9 +21,9 @@ describe "result" do
 
     let(:original_result) do
       {
-        source_fixture("sample.rb") => [nil, 1, 1, 1, nil, nil, 1, 1, nil, nil],
-        source_fixture("app/models/user.rb") => [nil, 1, 1, 1, nil, nil, 1, 0, nil, nil],
-        source_fixture("app/controllers/sample_controller.rb") => [nil, 1, 1, 1, nil, nil, 1, 0, nil, nil],
+        source_fixture("sample.rb") => {"lines" => [nil, 1, 1, 1, nil, nil, 1, 1, nil, nil]},
+        source_fixture("app/models/user.rb") => {"lines" => [nil, 1, 1, 1, nil, nil, 1, 0, nil, nil]},
+        source_fixture("app/controllers/sample_controller.rb") => {"lines" => [nil, 1, 1, 1, nil, nil, 1, 0, nil, nil]}
       }
     end
 
@@ -163,7 +163,7 @@ describe "result" do
         before do
           SimpleCov.formatters = [
             SimpleCov::Formatter::SimpleFormatter,
-            SimpleCov::Formatter::SimpleFormatter,
+            SimpleCov::Formatter::SimpleFormatter
           ]
         end
 
@@ -204,6 +204,16 @@ describe "result" do
           expect(files).to be_a SimpleCov::FileList
         end
       end
+    end
+  end
+
+  context "with outdated result format" do
+    it "adapts pre 0.18 results correctly to a new result format" do
+      old_resultset = {source_fixture("three.rb") => [nil, 1, 2]}
+
+      expect(described_class.new(old_resultset).original_result).to eq(
+        source_fixture("three.rb") => {"lines" => [nil, 1, 2]}
+      )
     end
   end
 end

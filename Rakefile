@@ -13,20 +13,18 @@ end
 Rake::Task[:build].prerequisites.unshift :fix_permissions
 
 require "rspec/core/rake_task"
-RSpec::Core::RakeTask.new(:spec) do |spec|
-  spec.pattern = FileList["spec/*_spec.rb"]
-end
+RSpec::Core::RakeTask.new(:spec)
 
 begin
   require "rubocop/rake_task"
   RuboCop::RakeTask.new
 rescue LoadError
   task :rubocop do
-    $stderr.puts "Rubocop is disabled"
+    warn "Rubocop is disabled"
   end
 end
 
 require "cucumber/rake/task"
 Cucumber::Rake::Task.new
 
-task :default => %i[rubocop spec cucumber]
+task default: %i[rubocop spec cucumber]

@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
-#
-# Profiles are SimpleCov configuration procs that can be easily
-# loaded using SimpleCov.start :rails and defined using
-#   SimpleCov.profiles.define :foo do
-#     # SimpleCov configuration here, same as in  SimpleCov.configure
-#   end
-#
 module SimpleCov
+  #
+  # Profiles are SimpleCov configuration procs that can be easily
+  # loaded using SimpleCov.start :rails and defined using
+  #   SimpleCov.profiles.define :foo do
+  #     # SimpleCov configuration here, same as in  SimpleCov.configure
+  #   end
+  #
   class Profiles < Hash
     #
     # Define a SimpleCov profile:
@@ -18,6 +18,7 @@ module SimpleCov
     def define(name, &blk)
       name = name.to_sym
       raise "SimpleCov Profile '#{name}' is already defined" unless self[name].nil?
+
       self[name] = blk
     end
 
@@ -27,6 +28,7 @@ module SimpleCov
     def load(name)
       name = name.to_sym
       raise "Could not find SimpleCov Profile called '#{name}'" unless key?(name)
+
       SimpleCov.configure(&self[name])
     end
   end

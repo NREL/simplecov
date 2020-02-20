@@ -3,14 +3,15 @@
 require "fileutils"
 require "docile"
 require "simplecov/formatter/multi_formatter"
-#
-# Bundles the configuration options used for SimpleCov. All methods
-# defined here are usable from SimpleCov directly. Please check out
-# SimpleCov documentation for further info.
-#
+
 module SimpleCov
-  module Configuration # rubocop:disable ModuleLength
-    attr_writer :filters, :groups, :formatter
+  #
+  # Bundles the configuration options used for SimpleCov. All methods
+  # defined here are usable from SimpleCov directly. Please check out
+  # SimpleCov documentation for further info.
+  #
+  module Configuration # rubocop:disable Metrics/ModuleLength
+    attr_writer :filters, :groups, :formatter, :print_error_status
 
     #
     # The root for the project. This defaults to the
@@ -20,6 +21,7 @@ module SimpleCov
     #
     def root(root = nil)
       return @root if defined?(@root) && root.nil?
+
       @root = File.expand_path(root || Dir.getwd)
     end
 
@@ -30,6 +32,7 @@ module SimpleCov
     #
     def coverage_dir(dir = nil)
       return @coverage_dir if defined?(@coverage_dir) && dir.nil?
+
       @coverage_path = nil # invalidate cache
       @coverage_dir = (dir || "coverage")
     end
@@ -93,8 +96,10 @@ module SimpleCov
     #
     def formatter(formatter = nil)
       return @formatter if defined?(@formatter) && formatter.nil?
+
       @formatter = formatter
       raise "No formatter configured. Please specify a formatter using SimpleCov.formatter = SimpleCov::Formatter::SimpleFormatter" unless @formatter
+
       @formatter
     end
 
@@ -117,6 +122,14 @@ module SimpleCov
     end
 
     #
+    # Whether we should print non-success status codes. This can be
+    # configured with the #print_error_status= method.
+    #
+    def print_error_status
+      defined?(@print_error_status) ? @print_error_status : true
+    end
+
+    #
     # Certain code blocks (i.e. Ruby-implementation specific code) can be excluded from
     # the coverage metrics by wrapping it inside # :nocov: comment blocks. The nocov token
     # can be configured to be any other string using this.
@@ -125,6 +138,7 @@ module SimpleCov
     #
     def nocov_token(nocov_token = nil)
       return @nocov_token if defined?(@nocov_token) && nocov_token.nil?
+
       @nocov_token = (nocov_token || "nocov")
     end
     alias skip_token nocov_token
@@ -177,6 +191,7 @@ module SimpleCov
     #
     def at_exit(&block)
       return proc {} unless running || block_given?
+
       @at_exit = block if block_given?
       @at_exit ||= proc { SimpleCov.result.format! }
     end
@@ -187,6 +202,7 @@ module SimpleCov
     #
     def project_name(new_name = nil)
       return @project_name if defined?(@project_name) && @project_name && new_name.nil?
+
       @project_name = new_name if new_name.is_a?(String)
       @project_name ||= File.basename(root.split("/").last).capitalize.tr("_", " ")
     end
@@ -224,7 +240,15 @@ module SimpleCov
     # Default is 0% (disabled)
     #
     def minimum_coverage(coverage = nil)
-      @minimum_coverage ||= (coverage || 0).to_f.round(2)
+      return @minimum_coverage ||= {} unless coverage
+
+      coverage = {DEFAULT_COVERAGE_CRITERION => coverage} if coverage.is_a?(Numeric)
+      coverage.keys.each { |criterion| raise_if_criterion_disabled(criterion) }
+      coverage.values.each do |percent|
+        minimum_possible_coverage_exceeded("minimum_coverage") if percent && percent > 100
+      end
+
+      @minimum_coverage = coverage
     end
 
     #
@@ -245,6 +269,7 @@ module SimpleCov
     # Default is 0% (disabled)
     #
     def minimum_coverage_by_file(coverage = nil)
+      minimum_possible_coverage_exceeded("minimum_coverage_by_file") if coverage && coverage > 100
       @minimum_coverage_by_file ||= (coverage || 0).to_f.round(2)
     end
 
@@ -286,7 +311,84 @@ module SimpleCov
       groups[group_name] = parse_filter(filter_argument, &filter_proc)
     end
 
+    SUPPORTED_COVERAGE_CRITERIA = %i[line branch].freeze
+    DEFAULT_COVERAGE_CRITERION = :line
+    #
+    # Define which coverage criterion should be evaluated.
+    #
+    # Possible coverage criteria:
+    # * :line - coverage based on lines aka has this line been executed?
+    # * :branch - coverage based on branches aka has this branch (think conditions) been executed?
+    #
+    # If not set the default is `:line`
+    #
+    # @param [Symbol] criterion
+    #
+    def coverage_criterion(criterion = nil)
+      return @coverage_criterion ||= DEFAULT_COVERAGE_CRITERION unless criterion
+
+      raise_if_criterion_unsupported(criterion)
+
+      @coverage_criterion = criterion
+    end
+
+    def enable_coverage(criterion)
+      raise_if_criterion_unsupported(criterion)
+
+      coverage_criteria << criterion
+    end
+
+    def coverage_criteria
+      @coverage_criteria ||= Set[DEFAULT_COVERAGE_CRITERION]
+    end
+
+    def coverage_criterion_enabled?(criterion)
+      coverage_criteria.member?(criterion)
+    end
+
+    def clear_coverage_criteria
+      @coverage_criteria = nil
+    end
+
+    def branch_coverage?
+      branch_coverage_supported? && coverage_criterion_enabled?(:branch)
+    end
+
+    def coverage_start_arguments_supported?
+      # safe to cache as within one process this value should never
+      # change
+      return @coverage_start_arguments_supported if defined?(@coverage_start_arguments_supported)
+
+      @coverage_start_arguments_supported = begin
+        require "coverage"
+        !Coverage.method(:start).arity.zero?
+      end
+    end
+
+    alias branch_coverage_supported? coverage_start_arguments_supported?
+
   private
+
+    def raise_if_criterion_disabled(criterion)
+      raise_if_criterion_unsupported(criterion)
+      # rubocop:disable Style/IfUnlessModifier
+      unless coverage_criterion_enabled?(criterion)
+        raise "Coverage criterion #{criterion}, is disabled! Please enable it first through enable_coverage #{criterion} (if supported)"
+      end
+      # rubocop:enable Style/IfUnlessModifier
+    end
+
+    def raise_if_criterion_unsupported(criterion)
+      # rubocop:disable Style/IfUnlessModifier
+      unless SUPPORTED_COVERAGE_CRITERIA.member?(criterion)
+        raise "Unsupported coverage criterion #{criterion}, supported values are #{SUPPORTED_COVERAGE_CRITERIA}"
+      end
+      # rubocop:enable Style/IfUnlessModifier
+    end
+
+    def minimum_possible_coverage_exceeded(coverage_option)
+      warn "The coverage you set for #{coverage_option} is greater than 100%"
+    end
 
     #
     # The actual filter processor. Not meant for direct use

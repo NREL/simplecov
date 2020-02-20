@@ -1,30 +1,53 @@
 # frozen_string_literal: true
 
-# An array of SimpleCov SourceFile instances with additional collection helper
-# methods for calculating coverage across them etc.
 module SimpleCov
-  class FileList < Array
+  # An array of SimpleCov SourceFile instances with additional collection helper
+  # methods for calculating coverage across them etc.
+  class FileList
+    include Enumerable
+    extend Forwardable
+
+    def_delegators :@files,
+                   # For Enumerable
+                   :each,
+                   # also delegating methods implemented in Enumerable as they have
+                   # custom Array implementations which are presumably better/more
+                   # resource efficient
+                   :size, :map, :count,
+                   # surprisingly not in Enumerable
+                   :empty?, :length,
+                   # still act like we're kinda an array
+                   :to_a, :to_ary
+
+    def initialize(files)
+      @files = files
+    end
+
+    def coverage_statistics
+      @coverage_statistics ||= compute_coverage_statistics
+    end
+
     # Returns the count of lines that have coverage
     def covered_lines
-      return 0.0 if empty?
-      map { |f| f.covered_lines.count }.inject(:+)
+      coverage_statistics[:line]&.covered
     end
 
     # Returns the count of lines that have been missed
     def missed_lines
-      return 0.0 if empty?
-      map { |f| f.missed_lines.count }.inject(:+)
+      coverage_statistics[:line]&.missed
     end
 
     # Returns the count of lines that are not relevant for coverage
     def never_lines
       return 0.0 if empty?
+
       map { |f| f.never_lines.count }.inject(:+)
     end
 
     # Returns the count of skipped lines
     def skipped_lines
       return 0.0 if empty?
+
       map { |f| f.skipped_lines.count }.inject(:+)
     end
 
@@ -36,26 +59,56 @@ module SimpleCov
 
     # Finds the least covered file and returns that file's name
     def least_covered_file
-      sort_by(&:covered_percent).first.filename
+      min_by(&:covered_percent).filename
     end
 
     # Returns the overall amount of relevant lines of code across all files in this list
     def lines_of_code
-      covered_lines + missed_lines
+      coverage_statistics[:line]&.total
     end
 
     # Computes the coverage based upon lines covered and lines missed
     # @return [Float]
     def covered_percent
-      return 100.0 if empty? || lines_of_code.zero?
-      Float(covered_lines * 100.0 / lines_of_code)
+      coverage_statistics[:line]&.percent
     end
 
     # Computes the strength (hits / line) based upon lines covered and lines missed
     # @return [Float]
     def covered_strength
-      return 0.0 if empty? || lines_of_code.zero?
-      Float(map { |f| f.covered_strength * f.lines_of_code }.inject(:+) / lines_of_code)
+      coverage_statistics[:line]&.strength
+    end
+
+    # Return total count of branches in all files
+    def total_branches
+      coverage_statistics[:branch]&.total
+    end
+
+    # Return total count of covered branches
+    def covered_branches
+      coverage_statistics[:branch]&.covered
+    end
+
+    # Return total count of covered branches
+    def missed_branches
+      coverage_statistics[:branch]&.missed
+    end
+
+    def branch_covered_percent
+      coverage_statistics[:branch]&.percent
+    end
+
+  private
+
+    def compute_coverage_statistics
+      total_coverage_statistics = @files.each_with_object(line: [], branch: []) do |file, together|
+        together[:line] << file.coverage_statistics[:line]
+        together[:branch] << file.coverage_statistics[:branch] if SimpleCov.branch_coverage?
+      end
+
+      coverage_statistics = {line: CoverageStatistics.from(total_coverage_statistics[:line])}
+      coverage_statistics[:branch] = CoverageStatistics.from(total_coverage_statistics[:branch]) if SimpleCov.branch_coverage?
+      coverage_statistics
     end
   end
 end

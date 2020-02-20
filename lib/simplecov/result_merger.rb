@@ -2,12 +2,12 @@
 
 require "json"
 
-#
-# Singleton that is responsible for caching, loading and merging
-# SimpleCov::Results into a single result for coverage analysis based
-# upon multiple test suites.
-#
 module SimpleCov
+  #
+  # Singleton that is responsible for caching, loading and merging
+  # SimpleCov::Results into a single result for coverage analysis based
+  # upon multiple test suites.
+  #
   module ResultMerger
     class << self
       # The path to the .resultset.json cache file
@@ -27,7 +27,7 @@ module SimpleCov
           if data
             begin
               JSON.parse(data) || {}
-            rescue
+            rescue StandardError
               {}
             end
           else
@@ -40,8 +40,10 @@ module SimpleCov
       def stored_data
         synchronize_resultset do
           return unless File.exist?(resultset_path)
+
           data = File.read(resultset_path)
           return if data.nil? || data.length < 2
+
           data
         end
       end
@@ -55,19 +57,24 @@ module SimpleCov
         resultset.each do |command_name, data|
           result = SimpleCov::Result.from_hash(command_name => data)
           # Only add result if the timeout is above the configured threshold
-          if (Time.now - result.created_at) < SimpleCov.merge_timeout
-            results << result
-          end
+          results << result if (Time.now - result.created_at) < SimpleCov.merge_timeout
         end
         results
+      end
+
+      def merge_and_store(*results)
+        result = merge_results(*results)
+        store_result(result) if result
+        result
       end
 
       # Merge two or more SimpleCov::Results into a new one with merged
       # coverage data and the command_name for the result consisting of a join
       # on all source result's names
       def merge_results(*results)
-        merged = SimpleCov::RawCoverage.merge_results(*results.map(&:original_result))
-        result = SimpleCov::Result.new(merged)
+        parsed_results = JSON.parse(JSON.dump(results.map(&:original_result)))
+        combined_result = SimpleCov::Combine::ResultsCombiner.combine(*parsed_results)
+        result = SimpleCov::Result.new(combined_result)
         # Specify the command name
         result.command_name = results.map(&:command_name).sort.join(", ")
         result
