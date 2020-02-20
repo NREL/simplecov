@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-#
-# Helper that tries to find out what test suite is running (for SimpleCov.command_name)
-#
 module SimpleCov
+  #
+  # Helper that tries to find out what test suite is running (for SimpleCov.command_name)
+  #
   module CommandGuesser
     class << self
       # Storage for the original command line call that invoked the test suite.
@@ -22,6 +22,7 @@ module SimpleCov
       def from_env
         # If being run from inside parallel_tests set the command name according to the process number
         return unless ENV["PARALLEL_TEST_GROUPS"] && ENV["TEST_ENV_NUMBER"]
+
         number = ENV["TEST_ENV_NUMBER"]
         number = "1" if number.empty?
         "(#{number}/#{ENV['PARALLEL_TEST_GROUPS']})"
@@ -48,6 +49,8 @@ module SimpleCov
           "RSpec"
         elsif defined?(Test::Unit)
           "Unit Tests"
+        elsif defined?(Minitest)
+          "Minitest"
         elsif defined?(MiniTest)
           "MiniTest"
         else

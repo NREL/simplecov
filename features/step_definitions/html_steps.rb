@@ -1,18 +1,8 @@
 # frozen_string_literal: true
 
-module GroupHelpers
-  def available_groups
-    all("#content .file_list_container")
-  end
-
-  def available_source_files
-    all(".source_files .source_table")
-  end
-end
-World(GroupHelpers)
-
 Then /^I should see the groups:$/ do |table|
   expected_groups = table.hashes
+  available_groups = all("#content .file_list_container")
   # Given group names should be the same number than those rendered in report
   expect(expected_groups.count).to eq(available_groups.count)
 
@@ -33,14 +23,46 @@ end
 
 Then /^I should see the source files:$/ do |table|
   expected_files = table.hashes
+  available_source_files = all(".t-file", visible: true)
+
   expect(expected_files.length).to eq(available_source_files.count)
+  include_branch_coverage = table.column_names.include?("branch coverage")
 
   # Find all filenames and their coverage present in coverage report
-  files = available_source_files.map { |f| {"name" => f.find("h3").text, "coverage" => f.find("h4 > span").text} }
+  files = available_source_files.map do |file_row|
+    coverage_data =
+      {
+        "name" => file_row.find(".t-file__name").text,
+        "coverage" => file_row.find(".t-file__coverage").text
+      }
 
-  expect(files.sort_by { |hsh| hsh["name"] }).to eq(expected_files.sort_by { |hsh| hsh["name"] })
+    coverage_data["branch coverage"] = file_row.find(".t-file__branch-coverage").text if include_branch_coverage
+
+    coverage_data
+  end
+
+  expect(files.sort_by { |coverage_data| coverage_data["name"] }).to eq(expected_files.sort_by { |coverage_data| coverage_data["name"] })
 end
 
 Then /^there should be (\d+) skipped lines in the source files$/ do |expected_count|
   expect(all(".source_table ol li.skipped").count).to eq(expected_count.to_i)
+end
+
+Then /^I should see a (.+) coverage summary of (\d+)\/(\d+)( for the file)?$/ do |coverage_type, hit, total, for_file|
+  missed = total - hit
+
+  extra_class = for_file ? ".source_table" : ""
+  summary_text = find("#{extra_class} .t-#{coverage_type}-summary", visible: true).text
+
+  expect(summary_text).to match /#{total} .+ #{hit} .+ #{missed} /
+end
+
+When /^I open the detailed view for "(.+)"$/ do |file_path|
+  click_link(file_path, class: "src_link", title: file_path)
+
+  expect(page).to have_css(".header h3", visible: true, text: file_path)
+end
+
+Then /^I should see coverage branch data like "(.+)"$/ do |text|
+  expect(find(".hits", visible: true, text: text)).to be_truthy
 end

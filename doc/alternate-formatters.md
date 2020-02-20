@@ -10,6 +10,11 @@ If you have built or found one that is missing here, please send a Pull Request 
 
 A formatter that generates a coverage badge for use in your project's readme using ImageMagick.
 
+#### [simplecov-small-badge](https://github.com/marcgrimme/simplecov-small-badge)
+*by Marc Grimme*
+
+A formatter that generates a small coverage badge for use in your project's readme using the SVG.
+
 #### [simplecov-cobertura](https://github.com/dashingrocket/simplecov-cobertura)
 *by Jesse Bowes*
 
@@ -49,3 +54,8 @@ A formatter that prints the coverage of the file under test when you run a singl
 *by [Yosuke Kabuto](https://github.com/ysksn)*
 
 t_wada AA formatter for SimpleCov
+
+#### [simplecov-material(https://github.com/chiefpansancolt/simplecov-material)
+*by [Chiefpansancolt](https://github.com/chiefpansancolt)*
+
+A Material Designed HTML formatter with clean and easy search of files with a tabular left Navigation.

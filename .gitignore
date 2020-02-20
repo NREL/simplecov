@@ -1,6 +1,4 @@
 .bundle
-Gemfile.lock
-gemfiles/*.lock
 
 ## MAC OS
 .DS_Store
@@ -19,13 +17,14 @@ tmtags
 *.swp
 
 ## PROJECT::GENERAL
-coverage
+/coverage
 rdoc
 pkg
 tmp
-capybara*.html
 .rvmrc
 
 ## PROJECT::SPECIFIC
 
 .yardoc
+spec/fixtures/coverage
+spec/fixtures/frameworks/coverage

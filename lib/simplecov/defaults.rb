@@ -6,12 +6,14 @@ require "pathname"
 require "simplecov/profiles/root_filter"
 require "simplecov/profiles/test_frameworks"
 require "simplecov/profiles/bundler_filter"
+require "simplecov/profiles/hidden_filter"
 require "simplecov/profiles/rails"
 
 # Default configuration
 SimpleCov.configure do
   formatter SimpleCov::Formatter::HTMLFormatter
   load_profile "bundler_filter"
+  load_profile "hidden_filter"
   # Exclude files outside of SimpleCov.root
   load_profile "root_filter"
 end
@@ -22,8 +24,10 @@ SimpleCov::CommandGuesser.original_run_command = "#{$PROGRAM_NAME} #{ARGV.join('
 at_exit do
   # If we are in a different process than called start, don't interfere.
   next if SimpleCov.pid != Process.pid
-  next if !SimpleCov.running
-  SimpleCov.set_exit_exception
+
+  # If SimpleCov is no longer running (e.g. `end_now` was called) then don't run exit tasks
+  next unless SimpleCov.running
+
   SimpleCov.run_exit_tasks!
 end
 
@@ -40,7 +44,7 @@ loop do
     begin
       load filename
     rescue LoadError, StandardError
-      $stderr.puts "Warning: Error occurred while trying to load #{filename}. " \
+      warn "Warning: Error occurred while trying to load #{filename}. " \
         "Error message: #{$!.message}"
     end
     break
