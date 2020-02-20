@@ -27,7 +27,7 @@ at_exit do
 
   # If SimpleCov is no longer running (e.g. `end_now` was called) then don't run exit tasks
   next unless SimpleCov.running
-  SimpleCov.set_exit_exception
+
   SimpleCov.run_exit_tasks!
 end
 
